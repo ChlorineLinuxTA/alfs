@@ -15,8 +15,8 @@ setvars()
 
 setvars
 
-tar -xf binutils-2.39.tar.xz
-cd binutils-2.39/
+tar -xf binutils-*.tar.xz
+cd binutils-*/
 
 mkdir build
 cd build
@@ -32,7 +32,4 @@ make
 make install
 
 cd ../..
-rm -rf binutils-2.39
-
-echo
-echo Done.
+rm -rf binutils-*/

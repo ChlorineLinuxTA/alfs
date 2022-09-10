@@ -19,7 +19,7 @@ check_root()
     if [ "$EUID" -ne 0 ]
     then 
         echo "Please execute this script as root. Now exiting."
-        exit
+        exit 12
     fi
 }
 
@@ -91,7 +91,7 @@ EOF
         read -p "Please confirm that the above output is compliant (y/n) ? " yn
         case $yn in
             [Yy]* ) break;;
-            [Nn]* ) exit;;
+            [Nn]* ) exit 12;;
             * ) echo "Please answer yes or no.";;
         esac
     done
@@ -198,7 +198,6 @@ routine2()
     if ! [ -e $LFS_LOCKS/temp_toolchain.lock ]
     then
         bash "$LFS_AUTOSCRIPTS/scripts/temp_toolchain.sh"
-        touch temp_toolchain.lock
     fi
 
     touch $LFS_LOCKS/routine2.lock
@@ -235,7 +234,7 @@ while true; do
     read -p "Are you sure you want to procede (y/n) ? " yn
     case $yn in
         [Yy]* ) build_all; break;;
-        [Nn]* ) exit;;
+        [Nn]* ) exit 12;;
         * ) echo "Please answer yes or no.";;
     esac
 done

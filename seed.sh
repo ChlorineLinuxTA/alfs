@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 setvars()
 {
     echo "Setting variables ..."
@@ -14,7 +16,7 @@ check_root()
     if [ "$EUID" -ne 0 ]
     then 
         echo "Please execute this script as root. Now exiting."
-        exit
+        exit 12
     fi
 }
 
@@ -71,7 +73,7 @@ while true; do
     read -p "Are you sure you want to procede (y/n) ? " yn
     case $yn in
         [Yy]* ) seed_script; break;;
-        [Nn]* ) exit;;
+        [Nn]* ) exit 12;;
         * ) echo "Please answer yes or no.";;
     esac
 done
