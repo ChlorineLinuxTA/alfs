@@ -17,7 +17,7 @@ compile()
 {
     echo "Compiling $1 ($2 SBU)"
     if ! [ -e $LFS_LOCKS/$1.plock ]; then
-        su lfs $TTSCRIPTS/$1.sh > $LFS_DEBUG/temp_$1.log 2>&1
+        bash $TTSCRIPTS/$1.sh > $LFS_DEBUG/temp_$1.log 2>&1
         touch $LFS_LOCKS/$1.plock
     else
         echo "Package lock exists. Skipping ..."
@@ -47,7 +47,7 @@ TTSCRIPTS="$LFS_AUTOSCRIPTS/scripts/packages/temptools"
 echo "Compiling Binutils Pass 1 (1 SBU) ... "
 if ! [ -e $LFS_LOCKS/binutils_p1.plock ]; then
     echo "Calculating 1 SBU ... "
-    time { su lfs $TTSCRIPTS/binutils_p1.sh > $LFS_DEBUG/temp_binutils_p1.log 2>&1; }
+    time { bash $TTSCRIPTS/binutils_p1.sh > $LFS_DEBUG/temp_binutils_p1.log 2>&1; }
     echo "Time tracking complete."
     touch $LFS_LOCKS/binutils_p1.plock
 else
@@ -65,7 +65,7 @@ echo "---------------------------------------------"
 
 echo "Performing imperative sanity check ... "
 echo "Output: "
-su lfs $TTSCRIPTS/glibc_test.sh 2>&1 | tee $LFS_DEBUG/glibc_sanity_check.log
+bash $TTSCRIPTS/glibc_test.sh 2>&1 | tee $LFS_DEBUG/glibc_sanity_check.log
 
 while true; do
     read -p "Proceed (y/n) ? " yn

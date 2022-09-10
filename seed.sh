@@ -38,6 +38,11 @@ seed_script()
     cp -R ./automation/* $LFS_AUTOSCRIPTS/
     chmod a+wt ./automation/scripts
 
+    chown lfs $LFS_AUTOSCRIPTS
+    chown lfs $LFS_AUTOSCRIPTS/*
+    chown lfs $LFS_LOCKS
+    chown lfs $LFS_DEBUG
+
     echo "Sources cache detected. Seeding cache ... "
     if [ -d "sources_cache" ]; then
         mkdir $LFS/sources

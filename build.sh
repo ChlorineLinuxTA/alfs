@@ -188,6 +188,11 @@ routine1()
     touch $LFS_LOCKS/routine1.lock
 }
 
+build_tt()
+{
+    bash $LFS_AUTOSCRIPTS/scripts/temp_toolchain.sh
+}
+
 routine2()
 {
     if ! [ -e $LFS_LOCKS/userprofile.lock ]
@@ -195,9 +200,36 @@ routine2()
         su lfs "$LFS_AUTOSCRIPTS/scripts/setuser.sh"
     fi
     
+    if [ -e $LFS_LOCKS/redirect_r2.lock ]
+    then
+        echo "-------------------------------------------------------------------"
+        echo "Please ensure you are NOT running as root."
+        echo "-------------------------------------------------------------------"
+        echo
+        while true; do
+            read -p "Proceed (y/n) ? " yn
+            case $yn in
+                [Yy]* ) build_tt; break;;
+                [Nn]* ) exit 12;;
+                * ) echo "Please answer yes or no.";;
+            esac
+        done
+        rm $LFS_LOCKS/redirect_r2.lock
+    fi
+
     if ! [ -e $LFS_LOCKS/temp_toolchain.lock ]
     then
-        bash "$LFS_AUTOSCRIPTS/scripts/temp_toolchain.sh"
+        touch $LFS_LOCKS/redirect_r2.lock
+        echo "-------------------------------------------------------------------------------------------------------------------"
+        echo "[KNOWN BUG]"
+        echo "Due to a few packages (like GCC) failing to build with 'lfs' user in a script with root privleges, "
+        echo "we recommend a better method. This build script will now exit. Please enter the following commands to follow: "
+        echo "su - lfs"
+        echo "cd $LFS"
+        echo "bash build.sh"
+        echo ", to re-enter this script again."
+        echo "-------------------------------------------------------------------------------------------------------------------"
+        exit 0
     fi
 
     touch $LFS_LOCKS/routine2.lock

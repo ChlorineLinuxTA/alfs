@@ -34,9 +34,9 @@ CONFIG_SITE=$LFS/usr/share/config.site
 export LFS LC_ALL LFS_TGT PATH CONFIG_SITE
 EOF
 
-echo "--------------------------------------------------------------------"
-echo "If you get a prompt after this please type 'exit'. It is a subshell."
-echo "--------------------------------------------------------------------"
+echo "------------------------------------------------------------------------------------"
+echo "[KNOWN BUG] If you get a prompt after this please type 'exit'. It is a subshell."
+echo "------------------------------------------------------------------------------------"
 
 bash -c "source ~/.bash_profile && exit"
 

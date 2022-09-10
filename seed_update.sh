@@ -26,6 +26,13 @@ update_seed()
     mkdir $LFS_AUTOSCRIPTS/scripts
     cp -Rv ./automation/scripts/* $LFS_AUTOSCRIPTS/
     chmod a+wt ./automation/scripts
+
+    chown lfs $LFS_AUTOSCRIPTS
+    chown lfs $LFS_AUTOSCRIPTS/*
+    chown lfs $LFS_LOCKS
+    chown lfs $LFS_LOCKS/*
+    chown lfs $LFS_DEBUG
+    chown lfs $LFS_DEBUG/*
 }
 
 # Entry Point
