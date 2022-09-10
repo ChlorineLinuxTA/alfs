@@ -15,7 +15,7 @@ setvars()
 
 compile()
 {
-    echo "Compiling $1 ($2 SBU)"
+    echo "Compiling $1 ($2)"
     if ! [ -e $LFS_LOCKS/$1.plock ]; then
         bash $TTSCRIPTS/$1.sh > $LFS_DEBUG/temp_$1.log 2>&1
         touch $LFS_LOCKS/$1.plock
@@ -41,6 +41,9 @@ done
 echo
 
 cd $LFS/sources
+
+echo "Removing possible build traces ..."
+rm -R */
 
 TTSCRIPTS="$LFS_AUTOSCRIPTS/scripts/packages/temptools"
 
