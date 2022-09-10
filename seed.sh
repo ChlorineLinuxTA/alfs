@@ -34,6 +34,7 @@ seed_script()
     cp ./build.sh $LFS/
 
     cp -R ./automation/* $LFS_AUTOSCRIPTS/
+    chmod a+wt ./automation/scripts
 
     echo "Sources cache detected. Seeding cache ... "
     if [ -d "sources_cache" ]; then
