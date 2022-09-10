@@ -142,7 +142,7 @@ prepare_lfs_fs()
         x86_64) chown -v lfs $LFS/lib64 2>&1 >> $LFS_DEBUG/prepare_lfs_fs.log ;;
     esac
 
-    chown -v lfs $LFS_AUTOSCRIPTS 2>&1 >> $LFS_DEBUG/prepare_lfs_fs.log
+    chown -Rv lfs $LFS_AUTOSCRIPTS 2>&1 >> $LFS_DEBUG/prepare_lfs_fs.log
     chown -v lfs ./build.sh 2>&1 >> $LFS_DEBUG/prepare_lfs_fs.log
 
     [ ! -e /etc/bash.bashrc ] || mv -v /etc/bash.bashrc /etc/bash.bashrc.NOUSE 2>&1 >> $LFS_DEBUG/prepare_lfs_fs.log
@@ -150,10 +150,8 @@ prepare_lfs_fs()
     touch $LFS_LOCKS/checkpoint3.lock
 }
 
-build_all() 
+routine1()
 {
-    setvars
-
     if [ -e $LFS_LOCKS/checkpoint1.lock ]
     then
         echo "Skipping host system check ... "
@@ -186,7 +184,41 @@ build_all()
         echo
         prepare_lfs_fs 2>&1 > $LFS_DEBUG/prepare_lfs_fs.log
     fi
+    
+    touch $LFS_LOCKS/routine1.lock
+}
 
+routine2()
+{
+    if ! [ -e $LFS_LOCKS/userprofile.lock ]
+    then
+        su lfs "$LFS_AUTOSCRIPTS/scripts/setuser.sh"
+    fi
+    
+    if ! [ -e $LFS_LOCKS/temp_toolchain.lock ]
+    then
+        bash "$LFS_AUTOSCRIPTS/scripts/temp_toolchain.sh"
+        touch temp_toolchain.lock
+    fi
+
+    touch $LFS_LOCKS/routine2.lock
+}
+
+build_all() 
+{
+    setvars
+
+    if ! [ -e $LFS_LOCKS/routine1.lock ]
+    then
+        routine1
+    fi
+    
+    if ! [ -e $LFS_LOCKS/routine2.lock ]
+    then
+        routine2
+    fi
+
+    echo "Done. LFS is built!"
 }
 
 # Entry Point
