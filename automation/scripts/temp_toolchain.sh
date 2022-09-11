@@ -43,7 +43,10 @@ echo
 cd $LFS/sources
 
 echo "Removing possible build traces ..."
-rm -R */
+
+if [ -d */ ]; then
+    rm -R */
+fi
 
 TTSCRIPTS="$LFS_AUTOSCRIPTS/scripts/packages/temptools"
 
