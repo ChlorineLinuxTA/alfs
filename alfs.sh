@@ -4,23 +4,116 @@ set -e
 
 LFS_WGETLIST_LINK="https://www.linuxfromscratch.org/lfs/downloads/stable/wget-list"
 
-setvars()
+disp_license()
 {
-    echo "Setting variables ..."
-    echo
-    export LFS=/mnt/lfs
-    export LFS_AUTOSCRIPTS=$LFS/automation
-    export LFS_LOCKS=$LFS_AUTOSCRIPTS/locks
-    export LFS_DEBUG=$LFS_AUTOSCRIPTS/debug
+    cat ./LICENSE
+}
+
+disp_help()
+{
+    echo "Work in Progress"
 }
 
 check_root()
 {
     if [ "$EUID" -ne 0 ]
     then 
-        echo "Please execute this script as root. Now exiting."
+        echo "Command '$1' requires root priveleges. Please execute this command as root. Now exiting."
         exit 12
     fi
+}
+
+setvars()
+{
+    echo "Setting variables ..."
+    export LFS=/mnt/lfs
+    export LFS_AUTOSCRIPTS=$LFS/automation
+    export LFS_LOCKS=$LFS_AUTOSCRIPTS/locks
+    export LFS_DEBUG=$LFS_AUTOSCRIPTS/debug
+}
+
+seed()
+{
+    check_root "seed"
+
+    setvars
+    echo "Please ensure that the target partition (/mnt/lfs) is mounted and empty."
+    echo "This script will wipe any files present on the target."
+    while true; do
+        read -p "Are you sure you want to procede (y/n) ? " yn
+        case $yn in
+            [Yy]* ) seed_script; break;;
+            [Nn]* ) exit 12;;
+            * ) echo "Please answer yes or no.";;
+        esac
+    done
+    echo
+    echo "Removing build traces ... "
+    rm -rf $LFS/*
+
+    echo "Seeding new build ... "
+    mkdir $LFS_AUTOSCRIPTS
+    mkdir $LFS_LOCKS
+    mkdir $LFS_DEBUG
+
+    cp ./alfs.sh $LFS/
+    chmod +x $LFS/alfs.sh
+
+    cp -R ./automation/* $LFS_AUTOSCRIPTS/
+
+    chown lfs $LFS_AUTOSCRIPTS
+    chown lfs $LFS_AUTOSCRIPTS/*
+    chown lfs $LFS_LOCKS
+    chown lfs $LFS_DEBUG
+
+    if [ -d "./sources_cache" ]; then
+        echo "Sources cache detected. Seeding cache ... "
+        mkdir $LFS/sources
+        chmod a+wt $LFS/sources
+
+        cp -R ./sources_cache/* $LFS/sources
+
+        touch $LFS_LOCKS/checkpoint2.lock
+    fi
+
+    if grep "lfs" /etc/passwd >/dev/null 2>&1; then
+        echo "User 'lfs' already present. Removing user..."
+        sudo deluser lfs
+    fi
+
+    echo "New build seed ready. Please run './alfs.sh build' in $LFS"
+}
+
+update_seed()
+{
+    check_root "update-seed"
+
+    echo "Please ensure that the target partition (/mnt/lfs) is mounted."
+    echo "This script is meant to preserve build locks and is meant for developer-use only."
+    echo "This also means you might experience broken behaviour."
+
+    while true; do
+        read -p "Are you sure you want to proceed (y/n) ? " yn
+        case $yn in
+            [Yy]* ) update_seed; break;;
+            [Nn]* ) exit 12;;
+            * ) echo "Please answer yes or no.";;
+        esac
+    done
+
+    rm -rf $LFS_AUTOSCRIPTS/scripts
+    mkdir $LFS_AUTOSCRIPTS/scripts
+    cp -Rv ./automation/scripts/* $LFS_AUTOSCRIPTS/
+    chmod a+wt ./automation/scripts
+
+    chown lfs $LFS_AUTOSCRIPTS
+    chown lfs $LFS_AUTOSCRIPTS/*
+    chown lfs $LFS_LOCKS
+    chown lfs $LFS_LOCKS/*
+    chown lfs $LFS_DEBUG
+    chown lfs $LFS_DEBUG/*
+
+    echo "Seed updated."
 }
 
 check_host()
@@ -157,7 +250,7 @@ routine1()
         echo "Skipping host system check ... "
         echo
     else
-        check_root
+        check_root "build"
         echo "Host system check ... "
         echo
         check_host
@@ -168,7 +261,7 @@ routine1()
         echo "Skipping fetching sources ... "
         echo
     else
-        check_root
+        check_root "build"
         echo "Fetching sources ... "
         echo
         fetch_sources 2>&1 > $LFS_DEBUG/fetching_sources.log
@@ -179,7 +272,7 @@ routine1()
         echo "Skipping LFS filesystem preparation ... "
         echo
     else
-        check_root
+        check_root "build"
         echo "Preparing LFS filesystem ... "
         echo
         prepare_lfs_fs 2>&1 > $LFS_DEBUG/prepare_lfs_fs.log
@@ -254,19 +347,23 @@ build_all()
 
 # Entry Point
 
-echo "Automated LFS Build System"
-echo "LFS Version 11.2, Script Version 1.2"
-echo "Copyright(C) ChlorineLabs, 2022, Internal Use Only"
-echo
+echo "Automated Linux from Scratch Build Script"
+echo "Build ID: ALFS 1.3 for LFS 11.2"
+echo "Copyright(C) 2022, ChlorinePentoxide"
+echo "Licensed under Apache 2.0"
+echo 
+echo "This software comes with ABSOLUTELY NO WARRANTY."
+echo "Type './alfs license' to display the full license."
+echo 
 
-echo "Please ensure this script is running in the target partition(/mnt/lfs)."
-echo
-
-while true; do
-    read -p "Are you sure you want to procede (y/n) ? " yn
-    case $yn in
-        [Yy]* ) build_all; break;;
-        [Nn]* ) exit 12;;
-        * ) echo "Please answer yes or no.";;
-    esac
-done
+if [ "$1" = "" ]; then
+    echo Empty
+elif [ "$1" = "license" ]; then
+    disp_license
+elif [ "$1" = "seed" ]; then 
+    seed
+elif [ "$1" = "update-seed" ]; then
+    update_seed
+elif [ "$1" = "build" ]; then
+    build_all
+fi
