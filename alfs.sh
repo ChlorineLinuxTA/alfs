@@ -32,6 +32,45 @@ setvars()
     export LFS_DEBUG=$LFS_AUTOSCRIPTS/debug
 }
 
+prepare_lfs_fs()
+{
+    touch $LFS_DEBUG/prepare_lfs_fs.log
+
+    setvars
+
+    mkdir -pv $LFS/{etc,var} $LFS/usr/{bin,lib,sbin} 2>&1 >> $LFS_DEBUG/prepare_lfs_fs.log
+
+    for i in bin lib sbin; do
+        ln -sv usr/$i $LFS/$i 2>&1 >> $LFS_DEBUG/prepare_lfs_fs.log
+    done
+
+    case $(uname -m) in
+        x86_64) mkdir -pv $LFS/lib64 2>&1 >> $LFS_DEBUG/prepare_lfs_fs.log ;;
+    esac
+
+    mkdir -pv $LFS/tools
+
+    echo "Creating user 'lfs' ..."
+
+    groupadd lfs 2>&1 >> $LFS_DEBUG/prepare_lfs_fs.log
+    useradd -s /bin/bash -g lfs -m -k /dev/null lfs 2>&1 >> $LFS_DEBUG/prepare_lfs_fs.log
+
+    echo "Enter a new password for user 'lfs' ..."
+    passwd lfs
+
+    chown -v lfs $LFS/{usr{,/*},lib,var,etc,bin,sbin,tools} 2>&1 >> $LFS_DEBUG/prepare_lfs_fs.log
+    case $(uname -m) in
+        x86_64) chown -v lfs $LFS/lib64 2>&1 >> $LFS_DEBUG/prepare_lfs_fs.log ;;
+    esac
+
+    chown -Rv lfs $LFS_AUTOSCRIPTS 2>&1 >> $LFS_DEBUG/prepare_lfs_fs.log
+    chown -v lfs ./alfs.sh 2>&1 >> $LFS_DEBUG/prepare_lfs_fs.log
+
+    [ ! -e /etc/bash.bashrc ] || mv -v /etc/bash.bashrc /etc/bash.bashrc.NOUSE 2>&1 >> $LFS_DEBUG/prepare_lfs_fs.log
+
+    touch $LFS_LOCKS/checkpoint3.lock
+}
+
 seed()
 {
     check_root "seed"
@@ -42,7 +81,7 @@ seed()
     while true; do
         read -p "Are you sure you want to procede (y/n) ? " yn
         case $yn in
-            [Yy]* ) seed_script; break;;
+            [Yy]* ) break;;
             [Nn]* ) exit 12;;
             * ) echo "Please answer yes or no.";;
         esac
@@ -61,6 +100,14 @@ seed()
 
     cp -R ./automation/* $LFS_AUTOSCRIPTS/
 
+    if grep "lfs" /etc/passwd >/dev/null 2>&1; then
+        echo "User 'lfs' already present. Removing user..."
+        sudo deluser lfs
+    fi
+
+    echo "Preparing LFS FS"
+    prepare_lfs_fs
+
     chown lfs $LFS_AUTOSCRIPTS
     chown lfs $LFS_AUTOSCRIPTS/*
     chown lfs $LFS_LOCKS
@@ -74,11 +121,6 @@ seed()
         cp -R ./sources_cache/* $LFS/sources
 
         touch $LFS_LOCKS/checkpoint2.lock
-    fi
-
-    if grep "lfs" /etc/passwd >/dev/null 2>&1; then
-        echo "User 'lfs' already present. Removing user..."
-        sudo deluser lfs
     fi
 
     echo "New build seed ready. Please run './alfs.sh build' in $LFS"
@@ -95,7 +137,7 @@ update_seed()
     while true; do
         read -p "Are you sure you want to proceed (y/n) ? " yn
         case $yn in
-            [Yy]* ) update_seed; break;;
+            [Yy]* ) break;;
             [Nn]* ) exit 12;;
             * ) echo "Please answer yes or no.";;
         esac
@@ -204,43 +246,6 @@ fetch_sources()
     wget --input-file=wget-list --continue --directory-prefix=$LFS/sources
 
     touch $LFS_LOCKS/checkpoint2.lock
-}
-
-prepare_lfs_fs()
-{
-    touch $LFS_DEBUG/prepare_lfs_fs.log
-
-    mkdir -pv $LFS/{etc,var} $LFS/usr/{bin,lib,sbin} 2>&1 >> $LFS_DEBUG/prepare_lfs_fs.log
-
-    for i in bin lib sbin; do
-        ln -sv usr/$i $LFS/$i 2>&1 >> $LFS_DEBUG/prepare_lfs_fs.log
-    done
-
-    case $(uname -m) in
-        x86_64) mkdir -pv $LFS/lib64 2>&1 >> $LFS_DEBUG/prepare_lfs_fs.log ;;
-    esac
-
-    mkdir -pv $LFS/tools
-
-    echo "Creating user 'lfs' ..."
-
-    groupadd lfs 2>&1 >> $LFS_DEBUG/prepare_lfs_fs.log
-    useradd -s /bin/bash -g lfs -m -k /dev/null lfs 2>&1 >> $LFS_DEBUG/prepare_lfs_fs.log
-
-    echo "Enter a new password for user 'lfs' ..."
-    passwd lfs
-
-    chown -v lfs $LFS/{usr{,/*},lib,var,etc,bin,sbin,tools} 2>&1 >> $LFS_DEBUG/prepare_lfs_fs.log
-    case $(uname -m) in
-        x86_64) chown -v lfs $LFS/lib64 2>&1 >> $LFS_DEBUG/prepare_lfs_fs.log ;;
-    esac
-
-    chown -Rv lfs $LFS_AUTOSCRIPTS 2>&1 >> $LFS_DEBUG/prepare_lfs_fs.log
-    chown -v lfs ./build.sh 2>&1 >> $LFS_DEBUG/prepare_lfs_fs.log
-
-    [ ! -e /etc/bash.bashrc ] || mv -v /etc/bash.bashrc /etc/bash.bashrc.NOUSE 2>&1 >> $LFS_DEBUG/prepare_lfs_fs.log
-
-    touch $LFS_LOCKS/checkpoint3.lock
 }
 
 routine1()
